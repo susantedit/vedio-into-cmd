@@ -166,10 +166,11 @@ def _frame_decoder(
 
 def play_video(
     video_path : str,
-    width      : int  = 120,
+    width      : int  = None,
     use_color  : bool = False,
     skip       : int  = 1,
     loop       : bool = False,
+    fit_screen : bool = True,
 ) -> None:
     """Engine utama pemutaran video ASCII."""
     if not os.path.exists(video_path):
@@ -189,14 +190,16 @@ def play_video(
 
         info        = get_video_info(cap)
         fps         = info["fps"] if info["fps"] > 0 else 30.0
-        # Kompensasi frame skip: jika skip=2, render 2x lebih cepat
         frame_delay = (1.0 / fps) * skip
+        
+        # Original video aspect ratio
+        video_ar = info["width_px"] / info["height_px"]
 
         if play_count == 1:
             print_info(video_path, info)
             mode_str = f"{C_GREEN}WARNA (ANSI 24-bit){RESET_COLOR}" if use_color else f"{C_GRAY}HITAM-PUTIH{RESET_COLOR}"
             print(f"  Mode      : {mode_str}")
-            print(f"  Lebar     : {width} karakter")
+            print(f"  Ajust     : {'Auto (Terminal)' if fit_screen else f'{width} chars'}")
             print(f"  Skip      : setiap {skip} frame")
             print(f"  Loop      : {'Ya' if loop else 'Tidak'}")
             print(f"\n{C_YELLOW}Memulai dalam 2 detik... Ctrl+C untuk berhenti.{RESET_COLOR}\n")
@@ -233,21 +236,37 @@ def play_video(
                     break
 
                 frame_count += 1
-                ascii_art = converter(frame, width)
+                
+                # Dynamic terminal size detection
+                term_size = os.get_terminal_size()
+                tw, th = term_size.columns, term_size.lines
+                
+                if fit_screen:
+                    available_h = max(1, th - 2)
+                    available_w = tw
+                    # 2.0 factor for character aspect ratio
+                    w_from_h = int(available_h * video_ar * 2.0)
+                    current_width = min(available_w, w_from_h)
+                else:
+                    current_width = width if width else 120
+
+                ascii_art = converter(frame, current_width)
 
                 # Render
                 sys.stdout.write(CURSOR_HOME)
                 sys.stdout.write(ascii_art)
 
-                # Status bar
+                # Status bar pinned to bottom
                 progress = frame_count / total_frames
-                bar_len  = 40
+                bar_len  = max(10, tw - 45)
                 filled   = int(bar_len * progress)
                 bar      = "█" * filled + "░" * (bar_len - filled)
                 loop_info = f" | Loop #{play_count}" if loop else ""
+                
+                sys.stdout.write(f"\033[{th};1H") # Move to last line
                 sys.stdout.write(
-                    f"\n{RESET_COLOR}{C_GRAY}[{bar}] "
-                    f"{frame_count}/{total_frames}{loop_info} | Ctrl+C berhenti{RESET_COLOR}"
+                    f"{RESET_COLOR}{C_GRAY}[{bar}] "
+                    f"{frame_count}/{total_frames}{loop_info} | Ctrl+C stop{RESET_COLOR}"
                 )
                 sys.stdout.flush()
 
@@ -280,16 +299,16 @@ def play_video(
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog        = "index_v4_ultimate.py",
+        prog        = "ASCII_v4_ultimate.py",
         description = "ASCII Art Video Player - Ultimate Edition",
         formatter_class=argparse.RawTextHelpFormatter,
         epilog="""
 Contoh penggunaan:
-  python index_v4_ultimate.py vid.mp4
-  python index_v4_ultimate.py vid.mp4 --color --width 100
-  python index_v4_ultimate.py vid.mp4 --no-color --width 140 --loop
-  python index_v4_ultimate.py vid.mp4 --color --skip 2 --width 80
-  python index_v4_ultimate.py vid.mp4 --info
+  python ASCII_v4_ultimate.py vid.mp4
+  python ASCII_v4_ultimate.py vid.mp4 --color --width 100
+  python ASCII_v4_ultimate.py vid.mp4 --no-fit --width 140 --loop
+  python ASCII_v4_ultimate.py vid.mp4 --color --skip 2
+  python ASCII_v4_ultimate.py vid.mp4 --info
 """
     )
 
@@ -303,7 +322,7 @@ Contoh penggunaan:
         "--width", "-w",
         type    = int,
         default = None,
-        help    = "Lebar output dalam karakter (default: 120 no-color, 80 color)"
+        help    = "Lebar tetap (mematikan auto-fit)"
     )
 
     color_group = parser.add_mutually_exclusive_group()
@@ -311,13 +330,21 @@ Contoh penggunaan:
         "--color", "-c",
         action  = "store_true",
         default = False,
-        help    = "Aktifkan warna ANSI 24-bit (butuh Windows Terminal / VS Code)"
+        help    = "Aktifkan warna ANSI 24-bit"
     )
     color_group.add_argument(
         "--no-color",
         action  = "store_true",
         default = False,
-        help    = "Paksa mode hitam-putih (default)"
+        help    = "Paksa mode hitam-putih"
+    )
+
+    parser.add_argument(
+        "--no-fit",
+        action  = "store_false",
+        dest    = "fit",
+        default = True,
+        help    = "Matikan auto-fit ke ukuran terminal"
     )
 
     parser.add_argument(
@@ -325,19 +352,19 @@ Contoh penggunaan:
         type    = int,
         default = 1,
         metavar = "N",
-        help    = "Render setiap N frame (misal: --skip 2 = separuh FPS, lebih cepat)"
+        help    = "Render setiap N frame"
     )
     parser.add_argument(
         "--loop", "-l",
         action  = "store_true",
         default = False,
-        help    = "Ulangi video terus-menerus hingga Ctrl+C"
+        help    = "Ulangi video terus-menerus"
     )
     parser.add_argument(
         "--info", "-i",
         action  = "store_true",
         default = False,
-        help    = "Hanya tampilkan info video, tidak memutar"
+        help    = "Hanya tampilkan info video"
     )
 
     return parser
@@ -354,7 +381,7 @@ def main() -> None:
         print(f"\n{C_BOLD}{C_CYAN}{'─' * 52}{RESET_COLOR}")
         print(f"  {C_BOLD}ASCII Video Player v4 — Ultimate Edition{RESET_COLOR}")
         print(f"{C_CYAN}{'─' * 52}{RESET_COLOR}")
-        print(f"\n  Untuk opsi lengkap: {C_YELLOW}python index_v4_ultimate.py --help{RESET_COLOR}\n")
+        print(f"\n  Untuk opsi lengkap: {C_YELLOW}python ASCII_v4_ultimate.py --help{RESET_COLOR}\n")
 
         args.video = input("  Masukkan path video: ").strip().strip('"')
         if not args.video:
@@ -364,13 +391,16 @@ def main() -> None:
         color_input = input("  Aktifkan warna? (y/N): ").strip().lower()
         args.color  = color_input == "y"
 
-        term_cols    = os.get_terminal_size().columns
-        default_width = min(term_cols, 100) if args.color else min(term_cols, 200)
-        try:
-            w = input(f"  Lebar output (default {default_width}, terminal={term_cols}): ").strip()
-            args.width = int(w) if w else default_width
-        except ValueError:
-            args.width = default_width
+        fit_input = input("  Auto-fit terminal size? (Y/n): ").strip().lower()
+        args.fit   = fit_input != "n"
+
+        if not args.fit:
+            term_cols = os.get_terminal_size().columns
+            try:
+                w = input(f"  Lebar output (default 120, terminal={term_cols}): ").strip()
+                args.width = int(w) if w else 120
+            except ValueError:
+                args.width = 120
 
         try:
             s = input("  Skip setiap N frame (default 1 = semua frame): ").strip()
@@ -381,10 +411,9 @@ def main() -> None:
         loop_input = input("  Loop video? (y/N): ").strip().lower()
         args.loop   = loop_input == "y"
 
-    # Tentukan lebar default berdasarkan mode
-    if args.width is None:
-        term_cols  = os.get_terminal_size().columns
-        args.width = min(term_cols, 100) if args.color else min(term_cols, 200)
+    # Jika sepesifikasi lebar manual, matikan fit otomatis
+    if args.width is not None:
+        args.fit = False
 
     # Validasi
     if args.skip < 1:
@@ -409,6 +438,7 @@ def main() -> None:
             use_color  = args.color,
             skip       = args.skip,
             loop       = args.loop,
+            fit_screen = args.fit
         )
     except KeyboardInterrupt:
         sys.stdout.write(SHOW_CURSOR)
