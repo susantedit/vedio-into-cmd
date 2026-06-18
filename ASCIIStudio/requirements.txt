@@ -1,0 +1,9 @@
+opencv-python>=4.8.0
+Pillow>=10.0.0
+numpy>=1.24.0
+psutil>=5.9.0
+
+# Optional — audio playback during preview (Python 3.13 and below only)
+# pygame>=2.5.0   # No wheel available for Python 3.14 yet — skip for now
+# Alternative: install pygame-ce which has 3.14 wheels
+# pip install pygame-ce

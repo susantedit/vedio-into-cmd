@@ -1,0 +1,18 @@
+{
+  "name": "Cyberpunk",
+  "primary":    [255, 0, 128],
+  "secondary":  [0, 255, 255],
+  "accent":     [255, 255, 0],
+  "success":    [0, 255, 128],
+  "warning":    [255, 165, 0],
+  "error":      [255, 50, 50],
+  "muted":      [100, 100, 140],
+  "border":     "─",
+  "corner_tl":  "┌",
+  "corner_tr":  "┐",
+  "corner_bl":  "└",
+  "corner_br":  "┘",
+  "side":       "│",
+  "bar_fill":   "▓",
+  "bar_empty":  "░"
+}

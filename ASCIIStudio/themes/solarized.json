@@ -1,0 +1,18 @@
+{
+  "name": "Solarized",
+  "primary":    [38, 139, 210],
+  "secondary":  [42, 161, 152],
+  "accent":     [253, 246, 227],
+  "success":    [133, 153, 0],
+  "warning":    [181, 137, 0],
+  "error":      [220, 50, 47],
+  "muted":      [101, 123, 131],
+  "border":     "─",
+  "corner_tl":  "╭",
+  "corner_tr":  "╮",
+  "corner_bl":  "╰",
+  "corner_br":  "╯",
+  "side":       "│",
+  "bar_fill":   "█",
+  "bar_empty":  "░"
+}

@@ -1,0 +1,18 @@
+{
+  "name": "Matrix",
+  "primary":    [0, 255, 70],
+  "secondary":  [0, 200, 50],
+  "accent":     [180, 255, 180],
+  "success":    [0, 255, 70],
+  "warning":    [200, 255, 0],
+  "error":      [255, 50, 50],
+  "muted":      [0, 120, 30],
+  "border":     "─",
+  "corner_tl":  "┌",
+  "corner_tr":  "┐",
+  "corner_bl":  "└",
+  "corner_br":  "┘",
+  "side":       "│",
+  "bar_fill":   "█",
+  "bar_empty":  "▒"
+}

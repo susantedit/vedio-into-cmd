@@ -1,0 +1,18 @@
+{
+  "name": "Nord",
+  "primary":    [136, 192, 208],
+  "secondary":  [129, 161, 193],
+  "accent":     [236, 239, 244],
+  "success":    [163, 190, 140],
+  "warning":    [235, 203, 139],
+  "error":      [191, 97, 106],
+  "muted":      [76, 86, 106],
+  "border":     "─",
+  "corner_tl":  "┌",
+  "corner_tr":  "┐",
+  "corner_bl":  "└",
+  "corner_br":  "┘",
+  "side":       "│",
+  "bar_fill":   "█",
+  "bar_empty":  "░"
+}
